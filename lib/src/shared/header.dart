@@ -36,11 +36,7 @@ class Header extends StatelessWidget {
                   color: AppColors.electricBlue,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: AppColors.accent,
-                  size: 30,
-                ),
+                child: const Icon(Icons.play_arrow, color: AppColors.accent),
               ),
               const SizedBox(width: 16),
               const Text(
@@ -70,35 +66,45 @@ class Header extends StatelessWidget {
                       title: 'Kontakt',
                       onTap: () => Navigator.pushNamed(context, '/contact'),
                     ),
+                    if (user != null) ...[
+                      const SizedBox(width: 20),
+                      _NavItem(
+                        title: 'Dashboard',
+                        onTap: () => Navigator.pushNamed(context, '/dashboard'),
+                      ),
+                      const SizedBox(width: 20),
+                      _NavItem(
+                        title: 'Profil',
+                        onTap:
+                            () =>
+                                Navigator.pushNamed(context, '/bewerberProfil'),
+                      ),
+                    ],
                     const SizedBox(width: 32),
-                    if (user == null) ...[
-                      ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.electricBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                    if (user == null)
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed:
+                                () => Navigator.pushNamed(context, '/login'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.electricBlue,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Login'),
                           ),
-                        ),
-                        child: const Text('Login'),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        onPressed:
-                            () => Navigator.pushNamed(context, '/register'),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          foregroundColor: AppColors.electricBlue,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                          const SizedBox(width: 12),
+                          OutlinedButton(
+                            onPressed:
+                                () => Navigator.pushNamed(context, '/register'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.electricBlue,
+                            ),
+                            child: const Text('Registrieren'),
                           ),
-                        ),
-                        child: const Text('Registrieren'),
-                      ),
-                    ] else ...[
+                        ],
+                      )
+                    else
                       PopupMenuButton<String>(
                         onSelected: (value) async {
                           if (value == 'profil') {
@@ -126,27 +132,22 @@ class Header extends StatelessWidget {
                         child: CircleAvatar(
                           backgroundColor: AppColors.electricBlue,
                           child: Text(
-                            user.displayName != null &&
-                                    user.displayName!.isNotEmpty
-                                ? user.displayName![0].toUpperCase()
-                                : 'U',
+                            user.displayName?.substring(0, 1).toUpperCase() ??
+                                'U',
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ),
-                    ],
                   ],
                 ),
               if (isMobile)
                 IconButton(
                   icon: const Icon(Icons.menu),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) => const _MobileDrawer(),
-                    );
-                  },
+                  onPressed:
+                      () => showModalBottomSheet(
+                        context: context,
+                        builder: (context) => const _MobileDrawer(),
+                      ),
                 ),
             ],
           ),
@@ -179,88 +180,52 @@ class _MobileDrawer extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _DrawerItem(
               title: 'Home',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/');
-              },
+              onTap: () => Navigator.pushNamed(context, '/'),
             ),
             _DrawerItem(
               title: 'Wie es funktioniert',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/how-it-works');
-              },
+              onTap: () => Navigator.pushNamed(context, '/how-it-works'),
             ),
             _DrawerItem(
               title: 'Kontakt',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/contact');
-              },
+              onTap: () => Navigator.pushNamed(context, '/contact'),
             ),
-            const SizedBox(height: 24),
+            if (user != null) ...[
+              _DrawerItem(
+                title: 'Dashboard',
+                onTap: () => Navigator.pushNamed(context, '/dashboard'),
+              ),
+              _DrawerItem(
+                title: 'Profil',
+                onTap: () => Navigator.pushNamed(context, '/bewerberProfil'),
+              ),
+            ],
+            const SizedBox(height: 20),
             if (user == null) ...[
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/login');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricBlue,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(40),
-                ),
+                onPressed: () => Navigator.pushNamed(context, '/login'),
                 child: const Text('Login'),
               ),
-              const SizedBox(height: 12),
               OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/register');
-                },
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(40),
-                ),
+                onPressed: () => Navigator.pushNamed(context, '/register'),
                 child: const Text('Registrieren'),
               ),
-            ] else ...[
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.electricBlue,
-                  child: Text(
-                    user.displayName != null && user.displayName!.isNotEmpty
-                        ? user.displayName![0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                title: Text(user.displayName ?? 'Benutzer'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/bewerberProfil');
-                },
-              ),
-              const SizedBox(height: 12),
+            ] else
               OutlinedButton(
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-                  Navigator.pop(context);
                   Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
                 },
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(40),
-                ),
                 child: const Text('Logout'),
               ),
-            ],
           ],
         ),
       ),
@@ -279,7 +244,10 @@ class _DrawerItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          Navigator.pop(context);
+          onTap();
+        },
         child: Text(title, style: const TextStyle(fontSize: 18)),
       ),
     );

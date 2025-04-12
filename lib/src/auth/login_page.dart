@@ -27,7 +27,11 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text.trim(),
       );
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/dashboard',
+        (route) => false,
+      );
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = "Fehler: ${e.code} – ${e.message}";
@@ -37,6 +41,13 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = false;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,7 +79,14 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: _isLoading ? null : _login,
               child:
                   _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                       : const Text('Einloggen'),
             ),
             const SizedBox(height: 20),
