@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"nexttalents-15c76","configurations":{"web":"1:1019967151130:web:37ceb3a53eab79075dc5a3"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "nexttalents-15c76",
+          "configurations": {
+            "web": "1:1019967151130:web:37ceb3a53eab79075dc5a3"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
