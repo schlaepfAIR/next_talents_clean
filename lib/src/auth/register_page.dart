@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:next_talents_clean/src/shared/layout.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -87,15 +88,25 @@ class _BewerberFormState extends State<BewerberForm> {
             password: _passwordController.text.trim(),
           );
 
-      await userCredential.user?.updateDisplayName(
-        '${_firstNameController.text} ${_lastNameController.text}',
-      );
+      final uid = userCredential.user?.uid;
+      if (uid == null) throw Exception("Kein Benutzer-ID erhalten");
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'type': 'bewerber',
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'email': _emailController.text.trim(),
+      });
 
       if (!mounted) return;
       Navigator.pushNamed(context, '/bewerberProfil');
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = 'Fehler: ${e.code} – ${e.message}';
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Unbekannter Fehler: $e';
       });
     } finally {
       setState(() {
@@ -145,11 +156,93 @@ class _BewerberFormState extends State<BewerberForm> {
   }
 }
 
-class FirmenForm extends StatelessWidget {
+class FirmenForm extends StatefulWidget {
   const FirmenForm({super.key});
 
   @override
+  State<FirmenForm> createState() => _FirmenFormState();
+}
+
+class _FirmenFormState extends State<FirmenForm> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _companyNameController = TextEditingController();
+
+  bool _isLoading = false;
+  String? _error;
+
+  Future<void> _register() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+
+      final uid = userCredential.user?.uid;
+      if (uid == null) throw Exception("Kein Benutzer-ID erhalten");
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'type': 'firma',
+        'companyName': _companyNameController.text.trim(),
+        'email': _emailController.text.trim(),
+      });
+
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/firmenDashboard');
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _error = 'Fehler: ${e.code} – ${e.message}';
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Unbekannter Fehler: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(children: const [Text('Firmen-Registrierung folgt ...')]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(_error!, style: const TextStyle(color: Colors.red)),
+          ),
+        TextField(
+          controller: _companyNameController,
+          decoration: const InputDecoration(labelText: 'Firmenname'),
+        ),
+        TextField(
+          controller: _emailController,
+          decoration: const InputDecoration(labelText: 'E-Mail'),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        TextField(
+          controller: _passwordController,
+          decoration: const InputDecoration(labelText: 'Passwort'),
+          obscureText: true,
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _register,
+          child:
+              _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Registrieren'),
+        ),
+      ],
+    );
   }
 }

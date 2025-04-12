@@ -61,4 +61,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'nexttalents-15c76.firebasestorage.app',
     measurementId: 'G-Z9MYW1C6M8',
   );
+
 }
