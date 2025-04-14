@@ -6,7 +6,7 @@ import 'job_form_page.dart';
 import 'job_detail_page.dart';
 
 class FirmenDashboardPage extends StatelessWidget {
-  const FirmenDashboardPage({Key? key}) : super(key: key);
+  const FirmenDashboardPage({super.key});
 
   Stream<List<JobPosting>> _loadCompanyJobs() {
     final userId = FirebaseAuth.instance.currentUser!.uid;
@@ -20,6 +20,14 @@ class FirmenDashboardPage extends StatelessWidget {
         return JobPosting.fromDocument(data, doc.id);
       }).toList();
     });
+  }
+
+  Stream<List<QueryDocumentSnapshot>> _loadWunschlisten(String jobId) {
+    return FirebaseFirestore.instance
+        .collection('wunschlisten')
+        .where('jobId', isEqualTo: jobId)
+        .snapshots()
+        .map((snap) => snap.docs);
   }
 
   @override
@@ -57,61 +65,84 @@ class FirmenDashboardPage extends StatelessWidget {
                   itemCount: jobs.length,
                   itemBuilder: (context, index) {
                     final job = jobs[index];
-                    return ListTile(
-                      title: Text(
-                        job.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ExpansionTile(
+                        title: Text(job.title),
+                        subtitle: Text(
+                          'Status: ${job.published ? 'Veröffentlicht' : 'Deaktiviert'}\nMatches: ${job.matchesCount}   Bewerbungen: ${job.applicationsCount}',
                         ),
-                      ),
-                      subtitle: Text(
-                        'Status: ${job.published ? 'Veröffentlicht' : 'Deaktiviert'}\n'
-                        'Matches: ${job.matchesCount}   Bewerbungen: ${job.applicationsCount}',
-                      ),
-                      isThreeLine: true,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => JobFormPage(job: job),
-                          ),
-                        );
-                      },
-                      leading: const Icon(Icons.work),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => JobFormPage(job: job),
+                                  ),
+                                );
+                              },
+                            ),
+                            Switch(
+                              value: job.published,
+                              onChanged: (val) async {
+                                try {
+                                  await FirebaseFirestore.instance
+                                      .collection('jobs')
+                                      .doc(job.id)
+                                      .update({'published': val});
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Status konnte nicht geändert werden: $e',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => JobFormPage(job: job),
+                          StreamBuilder<List<QueryDocumentSnapshot>>(
+                            stream: _loadWunschlisten(job.id),
+                            builder: (context, wunschSnapshot) {
+                              if (wunschSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              final wishes = wunschSnapshot.data ?? [];
+                              if (wishes.isEmpty) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Keine Bewerber auf der Wunschliste.',
+                                  ),
+                                );
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children:
+                                      wishes.map((doc) {
+                                        final data =
+                                            doc.data() as Map<String, dynamic>;
+                                        return Text(
+                                          '- ${data['userEmail'] ?? data['userId']}',
+                                        );
+                                      }).toList(),
                                 ),
                               );
-                            },
-                          ),
-                          Switch(
-                            value: job.published,
-                            onChanged: (val) async {
-                              try {
-                                await FirebaseFirestore.instance
-                                    .collection('jobs')
-                                    .doc(job.id)
-                                    .update({'published': val});
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Status konnte nicht geändert werden: $e',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
                             },
                           ),
                         ],
@@ -158,14 +189,28 @@ class FirmenDashboardPage extends StatelessWidget {
                     final data = jobs[index].data() as Map<String, dynamic>;
                     final title = data['title'] ?? '';
                     final description = data['description'] ?? '';
+                    final company =
+                        data['companyName'] ?? data['companyEmail'] ?? '';
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       child: ListTile(
                         title: Text(title),
-                        subtitle: Text(
-                          description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Erstellt von: $company',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
                         onTap: () {
                           Navigator.push(
@@ -191,8 +236,8 @@ class FirmenDashboardPage extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const JobFormPage()),
           );
         },
-        child: const Icon(Icons.add),
         tooltip: 'Neues Inserat erstellen',
+        child: const Icon(Icons.add),
       ),
     );
   }

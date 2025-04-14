@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:next_talents_clean/src/theme/theme.dart';
 import 'package:next_talents_clean/src/shared/header.dart';
 import 'package:next_talents_clean/src/shared/footer.dart';
 

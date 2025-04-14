@@ -75,8 +75,8 @@ class _JobFormPageState extends State<JobFormPage> {
   Future<void> _saveJob() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
     final jobData = {
       'title': _titleController.text.trim(),
@@ -92,7 +92,8 @@ class _JobFormPageState extends State<JobFormPage> {
       'startDate': _startDate != null ? Timestamp.fromDate(_startDate!) : null,
       'ausbildung': _ausbildung,
       'kategorien': _kategorien,
-      'companyId': userId,
+      'companyId': user.uid,
+      'companyEmail': user.email ?? '',
       'published': widget.job?.published ?? false,
       'createdAt': widget.job?.createdAt ?? FieldValue.serverTimestamp(),
     };
